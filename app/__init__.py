@@ -3,8 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 from instance.config import app_config
 
+
 app = Flask(__name__)
-databases = SQLAlchemy(app)
 
 
 def EnvironmentName(environ):
@@ -12,3 +12,5 @@ def EnvironmentName(environ):
 
 
 EnvironmentName('TestingConfig')
+databases = SQLAlchemy(app)
+from app import bucketlist
