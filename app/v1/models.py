@@ -7,8 +7,8 @@ class Items(databases.Model):
 
     id = databases.Column(databases.Integer, primary_key=True, autoincrement=True)
     name = databases.Column(databases.String(250))
-    datecreated = databases.Column(databases.DateTime)
-    date_modified = databases.Column(databases.DateTime)
+    datecreated = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
+    date_modified = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
     user = databases.Column(databases.Integer(), databases.ForeignKey('UserInfo.id'))
 
     def __init__(self, name):
@@ -20,6 +20,20 @@ class Items(databases.Model):
 
     def __repr__(self):
         return '<Items {}'.format(self.name)
+
+
+class BucketList(databases.Model):
+    __tablename__ = 'Bucketlist'
+    id = databases.Column(databases.Integer, primary_key=True, autoincrement=True)
+    name = databases.Column(databases.String(255))
+    items = databases.Column(databases.String(400))
+
+    def __init__(self, name):
+        self.name = name
+
+    def save(self):
+        databases.session.add(self)
+        databases.session.commit()
 
 
 class Users(databases.Model):
