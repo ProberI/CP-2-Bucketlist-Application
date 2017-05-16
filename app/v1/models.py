@@ -9,10 +9,11 @@ class Items(databases.Model):
     name = databases.Column(databases.String(250))
     datecreated = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
     date_modified = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
-    user = databases.Column(databases.Integer(), databases.ForeignKey('UserInfo.id'))
+    bucketlist_id = databases.Column(databases.Integer(), databases.ForeignKey('Bucketlist.id'))
 
-    def __init__(self, name):
+    def __init__(self, name, id):
         self.name = name
+        self.bucketlist_id = id
 
     def save(self):
         databases.session.add(self)
@@ -25,8 +26,12 @@ class Items(databases.Model):
 class BucketList(databases.Model):
     __tablename__ = 'Bucketlist'
     id = databases.Column(databases.Integer, primary_key=True, autoincrement=True)
+    user = databases.Column(databases.Integer(), databases.ForeignKey('UserInfo.id'))
     name = databases.Column(databases.String(255))
-    items = databases.Column(databases.String(400))
+    items = databases.relationship('Items', backref="Bucketlist")
+    date_created = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
+    date_modified = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
+    created_by = databases.Column(databases.Integer)
 
     def __init__(self, name):
         self.name = name
@@ -39,6 +44,7 @@ class BucketList(databases.Model):
 class Users(databases.Model):
     __tablename__ = 'UserInfo'
     id = databases.Column(databases.Integer, primary_key=True, autoincrement=True)
+    Bucket = databases.relationship('BucketList', backref='UserInfo')
     username = databases.Column(databases.String(250))
     password_hash = databases.Column(databases.String(300))
 
