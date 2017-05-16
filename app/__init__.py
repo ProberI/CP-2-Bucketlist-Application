@@ -11,6 +11,6 @@ def EnvironmentName(environ):
     app.config.from_object(app_config[environ])
 
 
-EnvironmentName('TestingConfig')
+EnvironmentName('DevelopmentEnviron')
 databases = SQLAlchemy(app)
 from app.v1 import bucketlist
