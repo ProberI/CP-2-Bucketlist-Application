@@ -1,4 +1,5 @@
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, g
+from flask_httpauth import HTTPBasicAuth
 import json
 import re
 from app import app
@@ -6,6 +7,7 @@ from app.v1.models import Users, BucketList, Items
 from sqlalchemy.exc import IntegrityError
 from app import databases
 databases.create_all()
+auth = HTTPBasicAuth()
 
 
 @app.route('/bucketlist/api/v1/auth/register', methods=['POST'])
@@ -30,7 +32,9 @@ def register():
                 response = jsonify({'error': 'This username is already in use'})
                 return response
             else:
-                userInfo = Users(username=uname, password_hash=passwd)
+                userInfo = Users(username=uname)
+                userInfo.hash_password(passwd)
+                print(userInfo.password_hash)
                 userInfo.save()
                 response = jsonify(
                     {'Registration status': 'Successfully registered ' + userInfo.username})
@@ -51,7 +55,7 @@ def login():
         user_name = request.json['username']
         passwd = request.json['password']
         res = Users.query.all()
-        user_name_check = [user.username for user in res if user.password_hash == passwd]
+        user_name_check = [user.username for user in res if user.verify_password(passwd) == True]
         if not user_name:
             response = jsonify({'error': 'Username field cannot be blank'})
             response.status_code = 400
@@ -66,8 +70,10 @@ def login():
             response.status_code = 400
             return response
         elif user_name in user_name_check:
+
             response = jsonify(
                 {'Login status': 'Successfully Logged in '})
+            g.user = user_name
             response.status_code = 200
             return response
         else:
@@ -277,7 +283,6 @@ def edit_items(bucket_id, item_id):
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>', methods=['DELETE'])
-# Prevent deletion of items between bucketlists
 def delete_item(bucket_id, item_id):
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
@@ -295,6 +300,13 @@ def delete_item(bucket_id, item_id):
         response = jsonify({'Status': 'Item successfully deleted.'})
         response.status_code = 200
         return response
+
+
+# @app.route('/api/token')
+# @auth.login_required
+def get_auth_token():
+    token = g.user.generate_auth_token()
+    return jsonify({'token': toekn.decode('ascii')})
 
 
 @app.errorhandler(404)
