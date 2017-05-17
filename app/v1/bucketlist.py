@@ -1,5 +1,6 @@
+from datetime import datetime, timedelta
 from flask import jsonify, request, abort, g
-from flask_httpauth import HTTPBasicAuth
+import jwt
 import json
 import re
 from app import app
@@ -7,13 +8,13 @@ from app.v1.models import Users, BucketList, Items
 from sqlalchemy.exc import IntegrityError
 from app import databases
 databases.create_all()
-auth = HTTPBasicAuth()
 
 
 @app.route('/bucketlist/api/v1/auth/register', methods=['POST'])
 def register():
     request.get_json(force=True)
     try:
+
         uname = request.json['username']
         passwd = request.json['password']
         if not uname:
@@ -34,7 +35,6 @@ def register():
             else:
                 userInfo = Users(username=uname)
                 userInfo.hash_password(passwd)
-                print(userInfo.password_hash)
                 userInfo.save()
                 response = jsonify(
                     {'Registration status': 'Successfully registered ' + userInfo.username})
@@ -70,9 +70,14 @@ def login():
             response.status_code = 400
             return response
         elif user_name in user_name_check:
+            payload = {
+                "username": user_name,
+                "exp": datetime.utcnow() + timedelta(seconds=1500)}
+            token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
 
             response = jsonify(
-                {'Login status': 'Successfully Logged in '})
+                {'Login status': 'Successfully Logged in ',
+                 'Token': token.decode('utf-8')})
             g.user = user_name
             response.status_code = 200
             return response
@@ -93,6 +98,7 @@ def login():
 def create_bucketlist():
     request.get_json(force=True)
     try:
+        verify_token(request)
         bucketlist_name = request.json['name']
         res = BucketList.query.all()
         if not bucketlist_name:
@@ -116,6 +122,7 @@ def create_bucketlist():
 
 @app.route('/bucketlist/api/v1/bucketlist', methods=['GET'])
 def get_bucketlist():
+    verify_token(request)
     res = BucketList.query.all()
     if not res:
         response = jsonify({'error': 'Ooops! You have not created any bucketlist yet!'})
@@ -138,6 +145,7 @@ def get_bucketlist():
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>', methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
+    verify_token(request)
     res = BucketList.query.all()
     bucket_data = [bucket for bucket in res if bucket.id == bucket_id]
     if request.method == 'GET':
@@ -221,6 +229,7 @@ def bucketlist_by_id(bucket_id):
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items', methods=['POST'])
 def add_items(bucket_id):
+    verify_token(request)
     res = BucketList.query.filter_by(id=bucket_id).first()
     if not res:
         response = jsonify({'Warning': 'Ooops! The bucketlist_id does not exist.'})
@@ -255,6 +264,7 @@ def add_items(bucket_id):
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>', methods=['PUT'])
 def edit_items(bucket_id, item_id):
+    verify_token(request)
     request.get_json(force=True)
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
@@ -284,6 +294,7 @@ def edit_items(bucket_id, item_id):
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>', methods=['DELETE'])
 def delete_item(bucket_id, item_id):
+    verify_token(request)
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
@@ -302,11 +313,20 @@ def delete_item(bucket_id, item_id):
         return response
 
 
-# @app.route('/api/token')
-# @auth.login_required
-def get_auth_token():
-    token = g.user.generate_auth_token()
-    return jsonify({'token': toekn.decode('ascii')})
+def verify_token(request):
+    token = request.headers.get("Authorization")
+    if not token:
+        abort(401)
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
+    except jwt.InvalidTokenError:
+        return jsonify({
+            'error': 'Invalid token'
+        })
+    except jwt.ExpiredSignatureError:
+        return jsonify({
+            'warning': 'Ooops! Session time expired'
+        })
 
 
 @app.errorhandler(404)
