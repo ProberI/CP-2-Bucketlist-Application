@@ -1,5 +1,8 @@
 from app import databases
-from passlib.apps import custom_app_context as pwd_context
+from passlib.hash import pbkdf2_sha256
+
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer,
+                          BadSignature, SignatureExpired)
 
 
 class Items(databases.Model):
@@ -53,7 +56,23 @@ class Users(databases.Model):
         databases.session.commit()
 
     def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
+        self.password_hash = pbkdf2_sha256.hash(password)
 
     def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
+        return pbkdf2_sha256.verify(password, self.password_hash)
+
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(app_config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app_config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None
+        except BadSignature:
+            return None
+        user = Users.query.get(data['id'])
+        return user
