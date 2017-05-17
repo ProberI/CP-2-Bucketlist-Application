@@ -34,7 +34,6 @@ class BucketlistTestCases(unittest.TestCase):
         response = self.app.post('/bucketlist/api/v1/auth/register', data=payload)
         self.assertIn('Username cannot contain special characters',
                       response.data.decode('utf-8'))
-        # self.assertEqual(response.status_code, )
 
     def test_register_with_existing_username(self):
         payload = json.dumps({'username': 'Paul', 'password': 'XXCsbdjjskds'})
@@ -56,6 +55,8 @@ class BucketlistTestCases(unittest.TestCase):
                       response.data.decode('utf-8'))
 
     def test_Login_with_invalid_credentials(self):
+        payload = json.dumps({'username': 'Paul', 'password': 'Upendo'})
+        self.app.post('/bucketlist/api/v1/auth/register', data=payload)
         payload = json.dumps({'username': 'Pau', 'password': 'Upendo'})
         response = self.app.post('/bucketlist/api/v1/auth/login', data=payload)
         self.assertIn('Invalid credentials', response.data.decode('utf-8'))
