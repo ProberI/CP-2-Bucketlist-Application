@@ -5,7 +5,7 @@ from app import app, EnvironmentName, databases
 
 class BucketlistTestCases(unittest.TestCase):
     def setUp(self):
-        self.app = app.test_client()
+        self.app = app.test_client()  # Send virtual requests to the application
         EnvironmentName('TestingConfig')
         databases.create_all()
 
@@ -14,7 +14,7 @@ class BucketlistTestCases(unittest.TestCase):
         databases.drop_all()
 
     def test_create_bucketlist_with_empty_name(self):
-        payload = json.dumps({'name': ''})
+        payload = json.dumps({'name': ''})  # Encode the payload arguments in json
         response = self.app.post('bucketlist/api/v1/bucketlist', data=payload)
         self.assertIn('Your Bucketlist needs a name/title to proceed.',
                       response.data.decode('utf-8'))
