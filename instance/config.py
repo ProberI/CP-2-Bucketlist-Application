@@ -11,13 +11,13 @@ class MainConfig(object):
 class DevelopmentEnviron(MainConfig):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://Upendo@localhost/bucketlist_db'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://@localhost/bucketlist_db'
 
 
 class TestingConfig(MainConfig):
     TESTING = True
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://Upendo@localhost/test_db'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://@localhost/test_db'
 
 
 class ProductionConfig(MainConfig):
