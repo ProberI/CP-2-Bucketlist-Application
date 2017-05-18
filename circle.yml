@@ -8,4 +8,7 @@ dependencies:
 
 test:
   override:
+    - python manage.py databases init
+    - python manage.py databases migrate
+    - python manage.py databases upgrade
     - nosetests 
