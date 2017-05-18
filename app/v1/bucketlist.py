@@ -129,18 +129,44 @@ def get_bucketlist():
         response.status_code = 200
         return response
     else:
-        bucketlist_data = []
-        for data in res:
-            final = {
-                'id': data.id,
-                'name': data.name,
-                'date-created': data.date_created,
-                'date_modified': data.date_modified,
-            }
-            bucketlist_data.append(final)
-        response = jsonify(bucketlist_data)
-        response.status_code = 200
-        return response
+        limit = int(request.args.get("limit", 20))
+        page = int(request.args.get("page", 1))
+        if limit > 100:
+            limit = 100
+        search = request.args.get("q", "")
+        if search:
+            res = [bucket for bucket in res if bucket.name in search]
+            if not res:
+                return jsonify({
+                    'message': 'Ooops! No data matching your search query'
+                })
+            else:
+                bucketlist_data = []
+                for data in res:
+                    final = {
+                        'id': data.id,
+                        'name': data.name,
+                        'date-created': data.date_created,
+                        'date_modified': data.date_modified,
+                    }
+                    bucketlist_data.clear()
+                    bucketlist_data.append(final)
+                response = jsonify(bucketlist_data)
+                response.status_code = 200
+                return response
+        else:
+            bucketlist_data = []
+            for data in res:
+                final = {
+                    'id': data.id,
+                    'name': data.name,
+                    'date-created': data.date_created,
+                    'date_modified': data.date_modified,
+                }
+                bucketlist_data.append(final)
+            response = jsonify(bucketlist_data)
+            response.status_code = 200
+            return response
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>', methods=['GET', 'PUT', 'DELETE'])
