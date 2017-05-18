@@ -137,7 +137,6 @@ def get_bucketlist():
         return response
     else:
         limit = int(request.args.get("limit", 20))
-        page = int(request.args.get("page", 1))
         if limit > 100:
             limit = 100
         search = request.args.get("q", "")
@@ -367,8 +366,7 @@ def verify_token(request):
     if not token:
         abort(401)
     try:
-        payload = jwt.decode(token,
-                             app.config['SECRET_KEY'], algorithm='HS256')
+        jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
     except jwt.InvalidTokenError:
         return jsonify({
             'error': 'Invalid token'
