@@ -21,23 +21,27 @@ def register():
             response = jsonify({'error': 'Username cannot be blank'})
             return response
         elif not re.match("^[a-zA-Z0-9_]*$", uname):
-            response = jsonify({'error': 'Username cannot contain special characters'})
+            response = jsonify({'error':
+                                'Username cannot contain special characters'})
             return response
         elif len(passwd) < 5:
-            response = jsonify({'error': 'Password should be more than 5 characters'})
+            response = jsonify({'error':
+                                'Password should be more than 5 characters'})
             return response
         else:
             res = Users.query.all()
             uname_check = [r.username for r in res]
             if uname in uname_check:
-                response = jsonify({'error': 'This username is already in use'})
+                response = jsonify({'error':
+                                    'This username is already in use'})
                 return response
             else:
                 userInfo = Users(username=uname)
                 userInfo.hash_password(passwd)
                 userInfo.save()
                 response = jsonify(
-                    {'Registration status': 'Successfully registered ' + userInfo.username})
+                    {'Registration status':
+                     'Successfully registered ' + userInfo.username})
                 response.status_code = 201
                 return response
     except KeyError:
@@ -55,7 +59,8 @@ def login():
         user_name = request.json['username']
         passwd = request.json['password']
         res = Users.query.all()
-        user_name_check = [user.username for user in res if user.verify_password(passwd) == True]
+        user_name_check = [user.username for user in res
+                           if user.verify_password(passwd) is True]
         if not user_name:
             response = jsonify({'error': 'Username field cannot be blank'})
             response.status_code = 400
@@ -66,14 +71,16 @@ def login():
             return response
 
         elif not re.match("^[a-zA-Z0-9_]*$", user_name):
-            response = jsonify({'error': 'Username cannot contain special characters'})
+            response = jsonify({'error':
+                                'Username cannot contain special characters'})
             response.status_code = 400
             return response
         elif user_name in user_name_check:
             payload = {
                 "username": user_name,
                 "exp": datetime.utcnow() + timedelta(seconds=1500)}
-            token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+            token = jwt.encode(payload,
+                               app.config['SECRET_KEY'], algorithm='HS256')
 
             response = jsonify(
                 {'Login status': 'Successfully Logged in ',
@@ -102,7 +109,8 @@ def create_bucketlist():
         bucketlist_name = request.json['name']
         res = BucketList.query.all()
         if not bucketlist_name:
-            response = jsonify({'error': 'Your Bucketlist needs a name/title to proceed.'})
+            response = jsonify({'error':
+                                'Your Bucketlist needs a title to proceed.'})
             response.status_code = 403
             return response
         else:
@@ -120,12 +128,14 @@ def create_bucketlist():
         return response
 
 
-@app.route('/bucketlist/api/v1/bucketlist', methods=['GET'])
+@app.route('/bucketlist/api/v1/bucketlist',
+           methods=['GET'])
 def get_bucketlist():
     verify_token(request)
     res = BucketList.query.all()
     if not res:
-        response = jsonify({'error': 'Ooops! You have not created any bucketlist yet!'})
+        response = jsonify({'error':
+                            'Ooops! You have not created any bucketlist yet!'})
         response.status_code = 200
         return response
     else:
@@ -169,7 +179,8 @@ def get_bucketlist():
             return response
 
 
-@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>',
+           methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
     verify_token(request)
     res = BucketList.query.all()
@@ -194,7 +205,9 @@ def bucketlist_by_id(bucket_id):
                 'items': final_data
             }
         if bucket_id not in data.values():
-            response = jsonify({'warning': 'Ooops! Sorry this bucketlist does not exist.'})
+            response = jsonify({'warning':
+                                'Ooops! Sorry this bucketlist does not exist.'
+                                })
             response.status_code = 404
             return response
         else:
@@ -211,7 +224,9 @@ def bucketlist_by_id(bucket_id):
                 'date_modified': data.date_modified
             }
         if bucket_id not in data.values():
-            response = jsonify({'warning': 'Ooops! Sorry this bucketlist does not exist.'})
+            response = jsonify({'warning':
+                                'Ooops! Sorry this bucketlist does not exist.'
+                                })
             response.status_code = 404
             return response
         else:
@@ -225,7 +240,9 @@ def bucketlist_by_id(bucket_id):
         request.get_json(force=True)
         data = BucketList.query.filter_by(id=bucket_id).first()
         if not data:
-            response = jsonify({'warning': 'Ooops! Sorry this bucketlist does not exist.'})
+            response = jsonify({'warning':
+                                'Ooops! Sorry this bucketlist does not exist.'
+                                })
             response.status_code = 404
             return response
         else:
@@ -253,12 +270,14 @@ def bucketlist_by_id(bucket_id):
                 return response
 
 
-@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items', methods=['POST'])
+@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items',
+           methods=['POST'])
 def add_items(bucket_id):
     verify_token(request)
     res = BucketList.query.filter_by(id=bucket_id).first()
     if not res:
-        response = jsonify({'Warning': 'Ooops! The bucketlist_id does not exist.'})
+        response = jsonify({'Warning':
+                            'Ooops! The bucketlist_id does not exist.'})
         response.status_code = 404
         return response
     else:
@@ -266,10 +285,12 @@ def add_items(bucket_id):
             item_data = Items.query.all()
             request.get_json(force=True)
             item_name = request.json['name']
-            item_check = [item.name for item in item_data if item.name == item_name]
+            item_check = [item.name for item in item_data
+                          if item.name == item_name]
             if item_check:
                 response = jsonify({
-                    'Warning': 'Ooops! Sorry, this particular item already exists.'
+                    'Warning':
+                    'Ooops! Sorry, this particular item already exists.'
                 })
                 return response
             else:
@@ -288,14 +309,16 @@ def add_items(bucket_id):
             return response
 
 
-@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>', methods=['PUT'])
+@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
+           methods=['PUT'])
 def edit_items(bucket_id, item_id):
     verify_token(request)
     request.get_json(force=True)
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
-        response = jsonify({'Warning': 'Ooops! The bucketlist_id does not exist.'})
+        response = jsonify({'Warning':
+                            'Ooops! The bucketlist_id does not exist.'})
         response.status_code = 404
         return response
     elif not items_response:
@@ -307,7 +330,8 @@ def edit_items(bucket_id, item_id):
             new_name = request.json['name']
             items_response.name = new_name
             databases.session.commit()
-            response = jsonify({'Status': 'Bucketlist Item successfully updated.'})
+            response = jsonify({'Status':
+                                'Bucketlist Item successfully updated.'})
             response.status_code = 200
             return response
         except KeyError:
@@ -318,13 +342,15 @@ def edit_items(bucket_id, item_id):
             return response
 
 
-@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>', methods=['DELETE'])
+@app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
+           methods=['DELETE'])
 def delete_item(bucket_id, item_id):
     verify_token(request)
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
-        response = jsonify({'Warning': 'Ooops! The bucketlist_id does not exist.'})
+        response = jsonify({'Warning':
+                            'Ooops! The bucketlist_id does not exist.'})
         response.status_code = 404
         return response
     elif not items_response:
@@ -344,7 +370,8 @@ def verify_token(request):
     if not token:
         abort(401)
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
+        payload = jwt.decode(token,
+                             app.config['SECRET_KEY'], algorithm='HS256')
     except jwt.InvalidTokenError:
         return jsonify({
             'error': 'Invalid token'
@@ -367,7 +394,8 @@ def page_not_found(e):
 @app.errorhandler(405)
 def method_not_allowed(e):
     response = jsonify({
-        'error': 'Oooops!Invalid request method. Please check your request method!'
+        'error':
+        'Oooops!Invalid request method. Please check your request method!'
     })
     response.status_code = 405
     return response
