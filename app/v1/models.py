@@ -1,3 +1,4 @@
+from datetime import datetime
 from app import databases
 from passlib.apps import custom_app_context as pwd_context
 
@@ -7,8 +8,9 @@ class Items(databases.Model):
 
     id = databases.Column(databases.Integer, primary_key=True, autoincrement=True)
     name = databases.Column(databases.String(250))
-    datecreated = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
-    date_modified = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
+    datecreated = databases.Column(databases.DateTime, default=datetime.utcnow())
+    date_modified = databases.Column(
+        databases.DateTime, default=datetime.utcnow(), onupdate=datetime.utcnow())
     bucketlist_id = databases.Column(databases.Integer(), databases.ForeignKey('Bucketlist.id'))
 
     def __init__(self, name, id):
@@ -29,8 +31,9 @@ class BucketList(databases.Model):
     user = databases.Column(databases.Integer(), databases.ForeignKey('UserInfo.id'))
     name = databases.Column(databases.String(255))
     items = databases.relationship('Items', backref="Bucketlist")
-    date_created = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
-    date_modified = databases.Column(databases.DateTime, default=databases.func.current_timestamp())
+    date_created = databases.Column(databases.DateTime, default=datetime.utcnow())
+    date_modified = databases.Column(
+        databases.DateTime, default=datetime.utcnow(), onupdate=datetime.utcnow())
     created_by = databases.Column(databases.Integer)
 
     def __init__(self, name):
