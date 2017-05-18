@@ -23,7 +23,7 @@ class BucketlistTestCases(unittest.TestCase):
         payload = json.dumps({'name': ''})
         response = self.app.post('bucketlist/api/v1/bucketlist', data=payload,
                                  headers={"Authorization": self.token})
-        self.assertIn('Your Bucketlist needs a name/title to proceed.',
+        self.assertIn('Your Bucketlist needs a title to proceed.',
                       response.data.decode('utf-8'))
 
     def test_create_bucketlist(self):
