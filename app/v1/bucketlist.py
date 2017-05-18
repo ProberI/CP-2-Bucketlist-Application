@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 from flask import jsonify, request, abort, g
 import jwt
-import json
 import re
 from app import app
 from app.v1.models import Users, BucketList, Items
-from sqlalchemy.exc import IntegrityError
 from app import databases
 databases.create_all()
 
@@ -107,7 +105,6 @@ def create_bucketlist():
     try:
         verify_token(request)
         bucketlist_name = request.json['name']
-        res = BucketList.query.all()
         if not bucketlist_name:
             response = jsonify({'error':
                                 'Your Bucketlist needs a title to proceed.'})

@@ -145,13 +145,6 @@ class BucketlistTestCases(unittest.TestCase):
         self.assertIn('Ooops! The item_id does not exist.', response.data.decode('utf-8'))
         self.assertTrue(response.status_code == 404)
 
-    def test_delete_bucketlist(self):
-        response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
-                                 headers={"Authorization": self.token})
-        response = self.app.delete('bucketlist/api/v1/bucketlist/1',
-                                   data=self.payload1, headers={"Authorization": self.token})
-        self.assertTrue(response.status_code == 200)
-
     def test_delete_items(self):
         response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
                                  headers={"Authorization": self.token})
