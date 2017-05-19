@@ -1,11 +1,15 @@
 from datetime import datetime, timedelta
-from flask import jsonify, request, abort, g
-import jwt
-import json
 import re
+
+from flask import jsonify, request, abort
+import json
+import jwt
+
+
 from app import app
-from app.v1.models import Users, BucketList, Items
 from app import databases
+from app.v1.models import Users, BucketList, Items
+
 databases.create_all()
 
 
@@ -105,7 +109,10 @@ def create_bucketlist():
     request.get_json(force=True)
     try:
         payload = verify_token(request)
-        user_id = payload['user_id']
+        if type(payload) is dict:
+            user_id = payload['user_id']
+        else:
+            return payload
         bucketlist_name = request.json['name']
         if not bucketlist_name:
             response = jsonify({'error':
@@ -130,8 +137,12 @@ def create_bucketlist():
 @app.route('/bucketlist/api/v1/bucketlist',
            methods=['GET'])
 def get_bucketlist():
+    msg = 'Ooops! You have not created any bucketlist yet!'
     payload = verify_token(request)
-    user_id = payload['user_id']
+    if type(payload) is dict:
+        user_id = payload['user_id']
+    else:
+        return payload
     res = BucketList.query.all()
     if not res:
         response = jsonify({'error':
@@ -144,10 +155,10 @@ def get_bucketlist():
             limit = 100
         search = request.args.get("q", "")
         if search:
-            res = [bucket for bucket in res if bucket.name in search and bucket.created_by in user_id]
+            res = [bucket for bucket in res if bucket.name in
+                   search and bucket.created_by in user_id]
             if not res:
-                response = jsonify({'error':
-                                    'Ooops! You have not created any bucketlist yet!'})
+                response = jsonify({'error': msg})
                 response.status_code = 200
                 return response
             else:
@@ -168,9 +179,9 @@ def get_bucketlist():
         else:
             res = [bucket for bucket in res if bucket.created_by in user_id]
             bucketlist_data = []
+
             if not res:
-                response = jsonify({'error':
-                                    'Ooops! You have not created any bucketlist yet!'})
+                response = jsonify({'error': msg})
                 response.status_code = 200
                 return response
             else:
@@ -192,7 +203,10 @@ def get_bucketlist():
            methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
     payload = verify_token(request)
-    user_id = payload['user_id']
+    if type(payload) is dict:
+        user_id = payload['user_id']
+    else:
+        return payload
     res = BucketList.query.all()
     bucket_data = [bucket for bucket in res if bucket.id ==
                    bucket_id and bucket.created_by in user_id]
@@ -285,9 +299,13 @@ def bucketlist_by_id(bucket_id):
            methods=['POST'])
 def add_items(bucket_id):
     payload = verify_token(request)
-    user_id = payload['user_id']
+    if type(payload) is dict:
+        user_id = payload['user_id']
+    else:
+        return payload
     resp = BucketList.query.all()
-    res = [data for data in resp if data.created_by in user_id and data.id == bucket_id]
+    res = [data for data in resp if data.created_by in user_id and data.id ==
+           bucket_id]
     if not res:
         response = jsonify({'Warning':
                             'Ooops! The bucketlist_id does not exist.'})
@@ -327,9 +345,13 @@ def add_items(bucket_id):
 def edit_items(bucket_id, item_id):
     request.get_json(force=True)
     payload = verify_token(request)
-    user_id = payload['user_id']
+    if type(payload) is dict:
+        user_id = payload['user_id']
+    else:
+        return payload
     resp = BucketList.query.all()
-    res = [data for data in resp if data.created_by in user_id and data.id == bucket_id]
+    res = [data for data in resp if data.created_by in user_id and
+           data.id == bucket_id]
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
         response = jsonify({'Warning':
@@ -360,7 +382,11 @@ def edit_items(bucket_id, item_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
            methods=['DELETE'])
 def delete_item(bucket_id, item_id):
-    verify_token(request)
+    payload = verify_token(request)
+    if type(payload) is dict:
+        user_id = payload['user_id']
+    else:
+        return payload
     res = BucketList.query.filter_by(id=bucket_id).first()
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
@@ -385,12 +411,14 @@ def verify_token(request):
     if not token:
         abort(401)
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
+        payload = jwt.decode(token, app.config['SECRET_KEY'],
+                             algorithm='HS256')
     except jwt.InvalidTokenError:
-        return json.dumps({'error': 'Ooops! Invalid Token'})
+        response = jsonify({'error': 'Ooops! Invalid Token'})
+        response.status_code = 401
+        return response
     except jwt.ExpiredSignatureError:
-        return json.dumps({'Warning': 'Ooops! Invalid Token'})
-
+        return jsonify({'Warning': 'Ooops! Expired Token'})
     return payload
 
 
