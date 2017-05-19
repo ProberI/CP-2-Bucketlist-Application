@@ -1,6 +1,7 @@
 from datetime import datetime
-from app import databases
 from passlib.apps import custom_app_context as pwd_context
+
+from app import databases
 
 
 class Items(databases.Model):
