@@ -42,10 +42,11 @@ class BucketList(databases.Model):
     date_modified = databases.Column(
         databases.DateTime, default=datetime.utcnow(),
         onupdate=datetime.utcnow())
-    created_by = databases.Column(databases.Integer)
+    created_by = databases.Column(databases.Integer())
 
-    def __init__(self, name):
+    def __init__(self, name, created_by):
         self.name = name
+        self.created_by = created_by
 
     def save(self):
         databases.session.add(self)

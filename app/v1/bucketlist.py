@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from flask import jsonify, request, abort, g
 import jwt
+import json
 import re
 from app import app
 from app.v1.models import Users, BucketList, Items
@@ -56,9 +57,10 @@ def login():
     try:
         user_name = request.json['username']
         passwd = request.json['password']
-        res = Users.query.all()
+        res = Users.query.filter_by(username=user_name)
         user_name_check = [user.username for user in res
                            if user.verify_password(passwd) is True]
+        user_id = [user.id for user in res if user_name in user_name_check]
         if not user_name:
             response = jsonify({'error': 'Username field cannot be blank'})
             response.status_code = 400
@@ -75,15 +77,14 @@ def login():
             return response
         elif user_name in user_name_check:
             payload = {
-                "username": user_name,
-                "exp": datetime.utcnow() + timedelta(seconds=1500)}
+                "user_id": user_id,
+                "exp": datetime.utcnow() + timedelta(minutes=60)}
             token = jwt.encode(payload,
                                app.config['SECRET_KEY'], algorithm='HS256')
 
             response = jsonify(
                 {'Login status': 'Successfully Logged in ',
                  'Token': token.decode('utf-8')})
-            g.user = user_name
             response.status_code = 200
             return response
         else:
@@ -103,7 +104,8 @@ def login():
 def create_bucketlist():
     request.get_json(force=True)
     try:
-        verify_token(request)
+        payload = verify_token(request)
+        user_id = payload['user_id']
         bucketlist_name = request.json['name']
         if not bucketlist_name:
             response = jsonify({'error':
@@ -111,7 +113,7 @@ def create_bucketlist():
             response.status_code = 403
             return response
         else:
-            bucket = BucketList(name=bucketlist_name)
+            bucket = BucketList(name=bucketlist_name, created_by=user_id[0])
             bucket.save()
             response = jsonify(
                 {'Status': 'Success'})
@@ -128,7 +130,8 @@ def create_bucketlist():
 @app.route('/bucketlist/api/v1/bucketlist',
            methods=['GET'])
 def get_bucketlist():
-    verify_token(request)
+    payload = verify_token(request)
+    user_id = payload['user_id']
     res = BucketList.query.all()
     if not res:
         response = jsonify({'error':
@@ -141,11 +144,12 @@ def get_bucketlist():
             limit = 100
         search = request.args.get("q", "")
         if search:
-            res = [bucket for bucket in res if bucket.name in search]
+            res = [bucket for bucket in res if bucket.name in search and bucket.created_by in user_id]
             if not res:
-                return jsonify({
-                    'message': 'Ooops! No data matching your search query'
-                })
+                response = jsonify({'error':
+                                    'Ooops! You have not created any bucketlist yet!'})
+                response.status_code = 200
+                return response
             else:
                 bucketlist_data = []
                 for data in res:
@@ -154,6 +158,7 @@ def get_bucketlist():
                         'name': data.name,
                         'date-created': data.date_created,
                         'date_modified': data.date_modified,
+                        'created_by': data.created_by,
                     }
                     bucketlist_data.clear()
                     bucketlist_data.append(final)
@@ -161,26 +166,36 @@ def get_bucketlist():
                 response.status_code = 200
                 return response
         else:
+            res = [bucket for bucket in res if bucket.created_by in user_id]
             bucketlist_data = []
-            for data in res:
-                final = {
-                    'id': data.id,
-                    'name': data.name,
-                    'date-created': data.date_created,
-                    'date_modified': data.date_modified,
-                }
-                bucketlist_data.append(final)
-            response = jsonify(bucketlist_data)
-            response.status_code = 200
-            return response
+            if not res:
+                response = jsonify({'error':
+                                    'Ooops! You have not created any bucketlist yet!'})
+                response.status_code = 200
+                return response
+            else:
+                for data in res:
+                    final = {
+                        'id': data.id,
+                        'name': data.name,
+                        'date-created': data.date_created,
+                        'date_modified': data.date_modified,
+                        'created_by': data.created_by,
+                    }
+                    bucketlist_data.append(final)
+                response = jsonify(bucketlist_data)
+                response.status_code = 200
+                return response
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>',
            methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
-    verify_token(request)
+    payload = verify_token(request)
+    user_id = payload['user_id']
     res = BucketList.query.all()
-    bucket_data = [bucket for bucket in res if bucket.id == bucket_id]
+    bucket_data = [bucket for bucket in res if bucket.id ==
+                   bucket_id and bucket.created_by in user_id]
     if request.method == 'GET':
         data = {}
         for data in bucket_data:
@@ -269,8 +284,10 @@ def bucketlist_by_id(bucket_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items',
            methods=['POST'])
 def add_items(bucket_id):
-    verify_token(request)
-    res = BucketList.query.filter_by(id=bucket_id).first()
+    payload = verify_token(request)
+    user_id = payload['user_id']
+    resp = BucketList.query.all()
+    res = [data for data in resp if data.created_by in user_id and data.id == bucket_id]
     if not res:
         response = jsonify({'Warning':
                             'Ooops! The bucketlist_id does not exist.'})
@@ -308,9 +325,11 @@ def add_items(bucket_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
            methods=['PUT'])
 def edit_items(bucket_id, item_id):
-    verify_token(request)
     request.get_json(force=True)
-    res = BucketList.query.filter_by(id=bucket_id).first()
+    payload = verify_token(request)
+    user_id = payload['user_id']
+    resp = BucketList.query.all()
+    res = [data for data in resp if data.created_by in user_id and data.id == bucket_id]
     items_response = Items.query.filter_by(id=item_id).first()
     if not res:
         response = jsonify({'Warning':
@@ -366,15 +385,13 @@ def verify_token(request):
     if not token:
         abort(401)
     try:
-        jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithm='HS256')
     except jwt.InvalidTokenError:
-        return jsonify({
-            'error': 'Invalid token'
-        })
+        return json.dumps({'error': 'Ooops! Invalid Token'})
     except jwt.ExpiredSignatureError:
-        return jsonify({
-            'warning': 'Ooops! Session time expired'
-        })
+        return json.dumps({'Warning': 'Ooops! Invalid Token'})
+
+    return payload
 
 
 @app.errorhandler(404)
