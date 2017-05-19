@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import re
 
 from flask import jsonify, request, abort
-import json
 import jwt
 
 
@@ -109,7 +108,7 @@ def create_bucketlist():
     request.get_json(force=True)
     try:
         payload = verify_token(request)
-        if type(payload) is dict:
+        if isinstance(payload, dict):
             user_id = payload['user_id']
         else:
             return payload
@@ -139,7 +138,7 @@ def create_bucketlist():
 def get_bucketlist():
     msg = 'Ooops! You have not created any bucketlist yet!'
     payload = verify_token(request)
-    if type(payload) is dict:
+    if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
@@ -203,7 +202,7 @@ def get_bucketlist():
            methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
     payload = verify_token(request)
-    if type(payload) is dict:
+    if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
@@ -299,7 +298,7 @@ def bucketlist_by_id(bucket_id):
            methods=['POST'])
 def add_items(bucket_id):
     payload = verify_token(request)
-    if type(payload) is dict:
+    if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
@@ -345,7 +344,7 @@ def add_items(bucket_id):
 def edit_items(bucket_id, item_id):
     request.get_json(force=True)
     payload = verify_token(request)
-    if type(payload) is dict:
+    if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
@@ -383,7 +382,7 @@ def edit_items(bucket_id, item_id):
            methods=['DELETE'])
 def delete_item(bucket_id, item_id):
     payload = verify_token(request)
-    if type(payload) is dict:
+    if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
