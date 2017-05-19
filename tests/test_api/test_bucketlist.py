@@ -1,5 +1,8 @@
+import time
 import unittest
+
 import json
+
 from app import app, EnvironmentName, databases
 
 
@@ -114,6 +117,15 @@ class BucketlistTestCases(unittest.TestCase):
                                  data=payload, headers={"Authorization": self.token})
         self.assertEqual(response.status_code, 404)
 
+    def test_add_items_with_invalid_token(self):
+        payload = json.dumps({'name': 'Before I kick the bucket.'})
+        response = self.app.post('bucketlist/api/v1/bucketlist', data=payload,
+                                 headers={"Authorization": self.token})
+        payload = json.dumps({'name': 'Go with bae on a cruise.'})
+        response = self.app.post('bucketlist/api/v1/bucketlist/1/items',
+                                 data=payload, headers={"Authorization": 'Invalid'})
+        self.assertEqual(response.status_code, 401)
+
     def test_edit_items(self):
         response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
                                  headers={"Authorization": self.token})
@@ -145,6 +157,16 @@ class BucketlistTestCases(unittest.TestCase):
         self.assertIn('Ooops! The item_id does not exist.', response.data.decode('utf-8'))
         self.assertTrue(response.status_code == 404)
 
+    def test_edit_items_with_invalid_token(self):
+        response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
+                                 headers={"Authorization": self.token})
+        payload = json.dumps({'name': 'Go with bae on a cruise. If she agrees to marry me'})
+        response = self.app.post('bucketlist/api/v1/bucketlist/1/items',
+                                 data=payload, headers={"Authorization": self.token})
+        response = self.app.put('bucketlist/api/v1/bucketlist/1/items/1',
+                                data=payload, headers={"Authorization": 'Invalid'})
+        self.assertTrue(response.status_code == 401)
+
     def test_delete_items(self):
         response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
                                  headers={"Authorization": self.token})
@@ -165,6 +187,16 @@ class BucketlistTestCases(unittest.TestCase):
                                    data=payload, headers={"Authorization": self.token})
         self.assertTrue(response.status_code == 404)
 
+    def test_delete_items_with_invalid_token(self):
+        response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
+                                 headers={"Authorization": self.token})
+        payload = json.dumps({'name': 'Go with bae on a cruise. If she agrees to marry me'})
+        response = self.app.post('bucketlist/api/v1/bucketlist/1/items',
+                                 data=payload, headers={"Authorization": self.token})
+        response = self.app.delete('bucketlist/api/v1/bucketlist/1/items/1',
+                                   data=payload, headers={"Authorization": 'Invalid'})
+        self.assertTrue(response.status_code == 401)
+
     def test_delete_items_with_invalid_items_id(self):
         response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
                                  headers={"Authorization": self.token})
@@ -174,3 +206,10 @@ class BucketlistTestCases(unittest.TestCase):
         response = self.app.delete('bucketlist/api/v1/bucketlist/1/items/15',
                                    data=payload, headers={"Authorization": self.token})
         self.assertTrue(response.status_code == 404)
+
+    def test_get_bucketlist_with_invalid_token(self):
+        response = self.app.post('bucketlist/api/v1/bucketlist', data=self.payload1,
+                                 headers={"Authorization": self.token})
+        response = self.app.get('/bucketlist/api/v1/bucketlist/1',
+                                headers={"Authorization": 'dd'})
+        self.assertEqual(response.status_code, 401)
