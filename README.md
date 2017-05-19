@@ -75,12 +75,11 @@ Below is a sample of a GET request for bucketlist
     "id": 1,
     "name": “Before I get to 30”
   }
-]```
-
-## Testing
+]
+```
+### Testing
 The application tests are based on python’s unit testing framework unittest.
 To run tests with nose, run `nosetests`
 
-## License
-
+### License
 The API uses an MIT license
