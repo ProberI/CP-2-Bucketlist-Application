@@ -37,7 +37,8 @@ class BucketList(databases.Model):
     user = databases.Column(databases.Integer(),
                             databases.ForeignKey('UserInfo.id'))
     name = databases.Column(databases.String(255))
-    items = databases.relationship('Items', backref="Bucketlist")
+    items = databases.relationship('Items', backref="Bucketlist",
+                                   cascade="all, delete")
     date_created = databases.Column(databases.DateTime,
                                     default=datetime.utcnow())
     date_modified = databases.Column(
