@@ -28,6 +28,11 @@ Install all app requirements
 `$ pip install -r requirements.txt`
 Create the database and run migrations
 
+`$ createdb bucketlist_db`
+
+> If testing do : 
+`$ createdb test_db`
+
 `$ python manage.py db init`
 
 `$ python manage.py db migrate`
@@ -52,7 +57,10 @@ DELETE bucketlist/app/v1/bucketlists/id | Deletes bucket list with the suppled i
 POST bucketlist/app/v1/bucketlists/id/items/ | Creates a new item in bucket list | PRIVATE
 PUT bucketlist/app/v1/bucketlists/id/items/item_id | Updates a bucket list item | PRIVATE
 DELETE bucketlist/app/v1/bucketlists/id/items/item_id | Deletes an item in a bucket list | PRIVATE
-
+### Features:
+* Search by name
+* Pagination
+* Token based authentication
 ### Searching
 
 It is possible to search bucketlists using the parameter `q` in the GET request. 
@@ -60,23 +68,39 @@ Example:
 
 `GET http://localhost:/bucketlists?q=Before I get to 30`
 
-This request will return all bucketlists with `Before I get to 30` in their name
+This request will return all bucketlists with `Before I get to 30` in their name.
+
+### Pagination
+
+It is possible to limit the count of bucketlist data displayed using the parameter `limit` in the GET request. 
+Example:
+
+`GET http://localhost:/bucketlists?limit=5`
 
 ### Sample GET response
 After a successful resgistration and login, you will receive an athentication token. Pass this token in your request header.
 Below is a sample of a GET request for bucketlist
 
 ```
-[
-  {
-    "created_by": 1,
-    "date-created": "Fri, 19 May 2017 08:10:48 GMT",
-    "date_modified": "Fri, 19 May 2017 08:10:48 GMT",
-    "id": 1,
-    "name": “Before I get to 30”
-  }
+{
+	id: 1,
+	name: “BucketList1”,
+	items: [
+		{
+id: 1,
+name: “I need to do X”,
+date_created: “2015-08-12 11:57:23”,
+date_modified: “2015-08-12 11:57:23”,
+done: False
+}
 ]
+	date_created: “2015-08-12 11:57:23”,
+	date_modified: “2015-08-12 11:57:23”
+	created_by: “1113456”
+}
+
 ```
+
 ### Testing
 The application tests are based on python’s unit testing framework unittest.
 To run tests with nose, run `nosetests`
