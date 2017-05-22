@@ -386,7 +386,7 @@ def edit_items(bucket_id, item_id):
 def delete_item(bucket_id, item_id):
     payload = verify_token(request)
     if isinstance(payload, dict):
-        user_id = payload['user_id']e
+        user_id = payload['user_id']
     else:
         return payload
     res = BucketList.query.filter(BucketList.created_by ==
