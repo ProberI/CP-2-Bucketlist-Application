@@ -18,6 +18,7 @@ manager.add_command('databases', MigrateCommand)
 @manager.command
 def init_db():
     os.system('createdb bucketlist_db')
+    os.system('createdb test_db')
     print('Databases created')
 
 
