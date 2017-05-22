@@ -13,6 +13,10 @@ databases.create_all()
 
 @app.route('/bucketlist/api/v1/auth/register', methods=['POST'])
 def register():
+    '''
+    This endpoint uses the post request method to add users in your database.
+    It acceps data in json format with username and password as keys.
+    '''
     request.get_json(force=True)
     try:
 
@@ -57,6 +61,11 @@ def register():
 
 @app.route('/bucketlist/api/v1/auth/login', methods=['POST'])
 def login():
+    '''
+    Accepts user crendtials and generates a jwt token for each user.
+    The token expires after an hour. This can be adjusted by setting
+    the 'exp'private Claim to whatever timeout you prefer.
+    '''
     request.get_json(force=True)
     try:
         user_name = request.json['username']
@@ -106,6 +115,9 @@ def login():
 
 @app.route('/bucketlist/api/v1/bucketlist', methods=['POST'])
 def create_bucketlist():
+    '''
+    This endpoint creates a new bucketlist for the user.
+    '''
     request.get_json(force=True)
     try:
         payload = verify_token(request)
@@ -137,6 +149,9 @@ def create_bucketlist():
 @app.route('/bucketlist/api/v1/bucketlist',
            methods=['GET'])
 def get_bucketlist():
+    '''
+    This endpoint queries userspecific data and outputs it in json.
+    '''
     msg = 'Ooops! You have not created any bucketlist yet!'
     payload = verify_token(request)
     if isinstance(payload, dict):
@@ -202,6 +217,11 @@ def get_bucketlist():
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>',
            methods=['GET', 'PUT', 'DELETE'])
 def bucketlist_by_id(bucket_id):
+    '''
+    This endpoint accepts three request methods. When putting it updates
+    bucketlist data. The get method gets the bucketlist as per the specified id
+    in the endpoint url.
+    '''
     payload = verify_token(request)
     if isinstance(payload, dict):
         user_id = payload['user_id']
@@ -299,6 +319,9 @@ def bucketlist_by_id(bucket_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items',
            methods=['POST'])
 def add_items(bucket_id):
+    '''
+    Adds items to a users's bucketlist.
+    '''
     payload = verify_token(request)
     if isinstance(payload, dict):
         user_id = payload['user_id']
@@ -344,6 +367,9 @@ def add_items(bucket_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
            methods=['PUT'])
 def edit_items(bucket_id, item_id):
+    '''
+    Edits a user's items according to the specified bucketlist.
+    '''
     request.get_json(force=True)
     payload = verify_token(request)
     if isinstance(payload, dict):
@@ -354,7 +380,8 @@ def edit_items(bucket_id, item_id):
     res = [data for data in resp if data.created_by in user_id and
            data.id == bucket_id]
     items_response = Items.query.filter(BucketList.created_by ==
-                                        user_id[0], Items.id == item_id).first()
+                                        user_id[0], Items.id ==
+                                        item_id).first()
     if not res:
         response = jsonify({'Warning':
                             'Ooops! The bucketlist_id does not exist.'})
@@ -384,15 +411,20 @@ def edit_items(bucket_id, item_id):
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
            methods=['DELETE'])
 def delete_item(bucket_id, item_id):
+    '''
+    Deletes an item from abucketlist.
+    '''
     payload = verify_token(request)
     if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
     res = BucketList.query.filter(BucketList.created_by ==
-                                  user_id[0], BucketList.id == bucket_id).first()
+                                  user_id[0], BucketList.id ==
+                                  bucket_id).first()
     items_response = Items.query.filter(BucketList.created_by ==
-                                        user_id[0], Items.id == item_id).first()
+                                        user_id[0], Items.id ==
+                                        item_id).first()
     if not res:
         response = jsonify({'Warning':
                             'Ooops! The bucketlist_id does not exist.'})
@@ -411,6 +443,10 @@ def delete_item(bucket_id, item_id):
 
 
 def verify_token(request):
+    '''
+    Verifies the passed token's authenticity and return the user_id to which
+    the token belongs.
+    '''
     token = request.headers.get("Authorization")
     if not token:
         abort(401)

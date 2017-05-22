@@ -7,6 +7,12 @@ from app import app, EnvironmentName, databases
 
 class BucketlistTestCases(unittest.TestCase):
     def setUp(self):
+        '''
+        Initializes postgres database tables and
+        creates a token for each test. Also creates a test_Client for each test.
+        The test client enables us to send virtual requests to the server.
+        '''
+
         self.app = app.test_client()
         EnvironmentName('TestingConfig')
         databases.create_all()
@@ -18,6 +24,10 @@ class BucketlistTestCases(unittest.TestCase):
         self.payload1 = json.dumps({'name': 'Before I kick the bucket.'})
 
     def tearDown(self):
+        '''
+        Drops table data for each test.
+        '''
+
         databases.session.remove()
         databases.drop_all()
 
