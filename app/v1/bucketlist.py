@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import re
 
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, url_for
 import jwt
 
 from app import app
@@ -103,7 +103,7 @@ def login():
         else:
             response = jsonify(
                 {'Login status': 'Invalid credentials'})
-            response.status_code = 200
+            response.status_code = 401
             return response
     except KeyError:
         response = jsonify({
@@ -152,17 +152,24 @@ def get_bucketlist():
     '''
     This endpoint queries userspecific data and outputs it in json.
     '''
-    msg = 'Ooops! You have not created any bucketlist yet!'
+    msg = 'Ooops! No bucketlists here'
+    endpoint = '/bucketlist/api/v1/bucketlist'
     payload = verify_token(request)
     if isinstance(payload, dict):
         user_id = payload['user_id']
     else:
         return payload
     limit = int(request.args.get("limit", 20))
-    if limit > 100:
+    page = int(request.args.get("page", 1))
+    if limit > 100 or page < 1:
+        page = 1
         limit = 100
-    res = BucketList.query.filter_by(created_by=user_id[0]).limit(limit)
-    if not res:
+    else:
+        limit = 20
+    resp = BucketList.query.filter_by(created_by=user_id[0]).paginate(page,
+                                                                      limit,
+                                                                      False)
+    if not resp:
         response = jsonify({'error':
                             'Ooops! You have not created any bucketlist yet!'})
         response.status_code = 200
@@ -170,29 +177,55 @@ def get_bucketlist():
     else:
         search = request.args.get("q", "")
         if search:
-            res = BucketList.query.filter(BucketList.name.contains(
-                search), BucketList.created_by == user_id[0]).limit(limit)
-            if not res:
-                response = jsonify({'error': msg})
-                response.status_code = 200
+            resp = BucketList.query.filter(BucketList.name.contains(
+                search), BucketList.created_by ==
+                user_id[0]).paginate(page, limit, False)
+
+            res = resp.items
+            pages = resp.pages
+
+            if resp.has_next or resp.has_prev:
+                url_next = (url_for(request.endpoint) + "?page=" +
+                            (str(page + 1) + "&limit" + (str(limit))))
+                url_prev = (url_for(request.endpoint) + "?page=" +
+                            (str(page - 1) + "&limit" + (str(limit))))
+            else:
+                url_next = None
+                url_prev = None
+
+            if len(res) < 1:
+                response = jsonify({'error':
+                                    "Ooops! This particular item doesn't exist"})
+                response.status_code = 404
                 return response
             else:
                 bucketlist_data = []
                 for data in res:
                     final = {
-                        'id': data.id,
-                        'name': data.name,
-                        'date-created': data.date_created,
-                        'date_modified': data.date_modified,
-                        'created_by': data.created_by,
+                        'id': data.__dict__['id'],
+                        'name': data.__dict__['name'],
+                        'date-created': data.__dict__['date_created'],
+                        'date_modified': data.__dict__['date_modified'],
+                        'created_by': data.__dict__['created_by'],
                     }
-                    # bucketlist_data.clear()
                     bucketlist_data.append(final)
-                response = jsonify(bucketlist_data)
+                response = jsonify(
+                    {"Info": {"url_next": url_next, "url_prev": url_prev,
+                              "Total pages": pages}}, bucketlist_data)
                 response.status_code = 200
                 return response
         else:
-            res = [bucket for bucket in res]
+            pages = resp.pages
+            if resp.has_next or resp.has_prev:
+                url_next = (url_for(request.endpoint) + "?page=" +
+                            (str(page + 1) + "&limit" + (str(limit))))
+                url_prev = (url_for(request.endpoint) + "?page=" +
+                            (str(page - 1) + "&limit" + (str(limit))))
+            else:
+                url_next = None
+                url_prev = None
+
+            res = [bucket for bucket in resp.items]
             bucketlist_data = []
 
             if not res:
@@ -202,14 +235,16 @@ def get_bucketlist():
             else:
                 for data in res:
                     final = {
-                        'id': data.id,
-                        'name': data.name,
-                        'date-created': data.date_created,
-                        'date_modified': data.date_modified,
-                        'created_by': data.created_by,
+                        'id': data.__dict__['id'],
+                        'name': data.__dict__['name'],
+                        'date-created': data.__dict__['date_created'],
+                        'date_modified': data.__dict__['date_modified'],
+                        'created_by': data.__dict__['created_by'],
                     }
                     bucketlist_data.append(final)
-                response = jsonify(bucketlist_data)
+                response = jsonify(
+                    {"Info": {"url_next": url_next, "url_prev": url_prev,
+                              "Total pages": pages}}, bucketlist_data)
                 response.status_code = 200
                 return response
 
