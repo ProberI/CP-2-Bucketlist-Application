@@ -15,7 +15,7 @@ class Items(databases.Model):
                                    default=datetime.utcnow())
     date_modified = databases.Column(databases.DateTime,
                                      default=datetime.utcnow(),
-                                     onupdate=datetime.utcnow())
+                                     onupdate=databases.func.current_timestamp())
     bucketlist_id = databases.Column(databases.Integer(),
                                      databases.ForeignKey('Bucketlist.id'))
 
@@ -44,7 +44,7 @@ class BucketList(databases.Model):
                                     default=datetime.utcnow())
     date_modified = databases.Column(
         databases.DateTime, default=datetime.utcnow(),
-        onupdate=datetime.utcnow())
+        onupdate=databases.func.current_timestamp())
     created_by = databases.Column(databases.Integer())
 
     def __init__(self, name, created_by):
