@@ -231,7 +231,7 @@ def get_bucketlist():
 
             if not res:
                 response = jsonify({'error': msg})
-                response.status_code = 200
+                response.status_code = 404
                 return response
             else:
                 for data in res:
