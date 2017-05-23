@@ -185,6 +185,7 @@ def get_bucketlist():
             pages = resp.pages
 
             if resp.has_next or resp.has_prev:
+                # Generate next and previous endpoint urls
                 url_next = (url_for(request.endpoint) + "?page=" +
                             (str(page + 1) + "&limit" + (str(limit))))
                 url_prev = (url_for(request.endpoint) + "?page=" +
