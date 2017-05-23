@@ -194,8 +194,8 @@ def get_bucketlist():
                 url_prev = None
 
             if len(res) < 1:
-                response = jsonify({'error':
-                                    "Ooops! This particular item doesn't exist"})
+                msg = "Ooops! This particular item doesn't exist"
+                response = jsonify({'error': msg})
                 response.status_code = 404
                 return response
             else:
