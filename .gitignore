@@ -5,6 +5,8 @@ __pycache__/
 
 # C extensions
 *.so
+migrations/
+.DS_Store
 
 # Distribution / packaging
 .Python
@@ -44,7 +46,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
-
+cover/
 # Translations
 *.mo
 *.pot
@@ -54,7 +56,6 @@ coverage.xml
 local_settings.py
 
 # Flask stuff:
-instance/
 .webassets-cache
 
 # Scrapy stuff:

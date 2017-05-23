@@ -8,9 +8,10 @@ app = Flask(__name__)
 
 
 def EnvironmentName(environ):
+    '''Function to set config envirionment type'''
     app.config.from_object(app_config[environ])
 
 
-EnvironmentName('TestingConfig')
-databases = SQLAlchemy(app)
-from app import bucketlist
+EnvironmentName('DevelopmentEnviron')
+databases = SQLAlchemy(app)  # Make databases models default to app context
+from app.v1 import bucketlist
