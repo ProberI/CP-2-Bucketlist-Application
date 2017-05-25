@@ -13,5 +13,7 @@ test:
     - python manage.py databases init
     - python manage.py databases migrate
     - python manage.py databases upgrade
-    - export SECRET_KEY="\x0b\xa7sU\xe8\x13\x15\x89\xb90\xd2~Q\x19\xc8\x84\xe0\xe2\xa4w\xc6fw"
+    - touch .env
+    - echo 'export SECRET_KEY="\x0b\xa7sU\xe8\x13\x15\x89\xb90\xd2~Q\x19\xc8\x84\xe0\xe2\xa4w\xc6fw"' >> .env
+    - source .env
     - nosetests 
