@@ -5,7 +5,7 @@ class MainConfig(object):
     DEBUG = False
     WTF_CSRF_ENABLED = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.getenv('SECRET_KEY')
+    SECRET_KEY = os.urandom(24)
 
 
 class DevelopmentEnviron(MainConfig):
