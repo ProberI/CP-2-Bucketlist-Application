@@ -172,7 +172,7 @@ def get_bucketlist():
     if not resp:
         response = jsonify({'error':
                             'Ooops! You have not created any bucketlist yet!'})
-        response.status_code = 200
+        response.status_code = 404
         return response
     else:
         search = request.args.get("q", "")

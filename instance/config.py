@@ -5,8 +5,7 @@ class MainConfig(object):
     DEBUG = False
     WTF_CSRF_ENABLED = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # Will generate a random secret key with a sequence of random chaarcters
-    SECRET_KEY = os.urandom(24)
+    SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 class DevelopmentEnviron(MainConfig):
