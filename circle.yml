@@ -13,4 +13,5 @@ test:
     - python manage.py databases init
     - python manage.py databases migrate
     - python manage.py databases upgrade
+    - export SECRET_KEY=os.urandom(24)
     - nosetests 
