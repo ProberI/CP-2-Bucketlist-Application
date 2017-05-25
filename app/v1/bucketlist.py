@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 import re
 
@@ -93,7 +94,7 @@ def login():
                 "user_id": user_id,
                 "exp": datetime.utcnow() + timedelta(minutes=60)}
             token = jwt.encode(payload,
-                               app.config['SECRET_KEY'], algorithm='HS256')
+                               os.getenv('SECRET_KEY'), algorithm='HS256')
 
             response = jsonify(
                 {'Login status': 'Successfully Logged in ',
@@ -487,7 +488,7 @@ def verify_token(request):
     if not token:
         abort(401)
     try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'],
+        payload = jwt.decode(token, os.getenv('SECRET_KEY'),
                              leeway=timedelta(seconds=2))
     except jwt.InvalidTokenError:
         response = jsonify({'error': 'Ooops! Invalid Token'})
