@@ -47,7 +47,7 @@ class BucketlistTestCases(unittest.TestCase):
     def test_get_bucketlist_while_database_empty(self):
         response = self.app.get('/bucketlist/api/v1/bucketlist',
                                 headers={"Authorization": self.token})
-        self.assertTrue(response.status_code == 200)
+        self.assertTrue(response.status_code == 404)
         self.assertIn('Ooops! No bucketlists here',
                       response.data.decode('utf-8'))
 
