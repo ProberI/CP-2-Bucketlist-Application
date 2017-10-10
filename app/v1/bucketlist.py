@@ -12,6 +12,53 @@ from app.v1.models import Users, BucketList, Items
 databases.create_all()
 
 
+def registration_verification(uname, passwd):
+    '''
+    Handles resistraion details verification
+    '''
+    if not uname:
+        response = jsonify({'error': 'Username cannot be blank'})
+        return response
+    elif not re.match("^[a-zA-Z0-9_]*$", uname):
+        response = jsonify({'error':
+                            'Username cannot contain special characters'})
+        response.status_code = 400
+        return response
+    elif len(passwd) < 5:
+        response = jsonify({'error':
+                            'Password should be more than 5 characters'})
+        response.status_code = 400
+        return response
+    else:
+        res = Users.query.all()
+        uname_check = [r.username for r in res]
+        if uname in uname_check:
+            response = jsonify({'error':
+                                'This username is already in use'})
+            return response
+        else:
+            userInfo = Users(username=uname)
+            userInfo.hash_password(passwd)
+            userInfo.save()
+            response = jsonify(
+                {'Registration status':
+                    'Successfully registered ' + userInfo.username})
+            response.status_code = 201
+            return response
+
+
+def invalid_request_body_response():
+    '''
+    Handles invalid request syntax
+    '''
+    response = jsonify({
+            'error': 'Please use username and password for dict keys.'
+        })
+
+    response.status_code = 500
+    return response
+
+
 @app.route('/bucketlist/api/v1/auth/register', methods=['POST'])
 def register():
     '''
@@ -20,44 +67,13 @@ def register():
     '''
     request.get_json(force=True)
     try:
-
         uname = request.json['username']
         passwd = request.json['password']
-        if not uname:
-            response = jsonify({'error': 'Username cannot be blank'})
-            return response
-        elif not re.match("^[a-zA-Z0-9_]*$", uname):
-            response = jsonify({'error':
-                                'Username cannot contain special characters'})
-            response.status_code = 400
-            return response
-        elif len(passwd) < 5:
-            response = jsonify({'error':
-                                'Password should be more than 5 characters'})
-            response.status_code = 400
-            return response
-        else:
-            res = Users.query.all()
-            uname_check = [r.username for r in res]
-            if uname in uname_check:
-                response = jsonify({'error':
-                                    'This username is already in use'})
-                return response
-            else:
-                userInfo = Users(username=uname)
-                userInfo.hash_password(passwd)
-                userInfo.save()
-                response = jsonify(
-                    {'Registration status':
-                     'Successfully registered ' + userInfo.username})
-                response.status_code = 201
-                return response
-    except KeyError:
-        response = jsonify({
-            'error': 'Please use username and password for dict keys.'
-        })
-        response.status_code = 500
+        response = registration_verification(uname, passwd)
         return response
+
+    except KeyError:
+        return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/auth/login', methods=['POST'])
@@ -106,12 +122,9 @@ def login():
                 {'Login status': 'Invalid credentials'})
             response.status_code = 401
             return response
+
     except KeyError:
-        response = jsonify({
-            'error': 'Please use username and password for dict keys.'
-        })
-        response.status_code = 500
-        return response
+        return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/bucketlist', methods=['POST'])
@@ -139,12 +152,9 @@ def create_bucketlist():
                 {'Status': 'Success'})
             response.status_code = 201
             return response
+
     except KeyError:
-        response = jsonify({
-            'error': 'Please use name for dict key.'
-        })
-        response.status_code = 500
-        return response
+        return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/bucketlist',
@@ -346,11 +356,7 @@ def bucketlist_by_id(bucket_id):
                 response.status_code = 201
                 return response
             except KeyError:
-                response = jsonify({
-                    'error': 'Please use name for dict keys.'
-                })
-                response.status_code = 500
-                return response
+                return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items',
@@ -393,12 +399,9 @@ def add_items(bucket_id):
                 })
                 response.status_code = 200
                 return response
+
         except KeyError:
-            response = jsonify({
-                'error': 'Please use name for dict keys.'
-            })
-            response.status_code = 500
-            return response
+            return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
@@ -437,12 +440,9 @@ def edit_items(bucket_id, item_id):
                                 'Bucketlist Item successfully updated.'})
             response.status_code = 200
             return response
+
         except KeyError:
-            response = jsonify({
-                'error': 'Please use name for dict keys.'
-            })
-            response.status_code = 500
-            return response
+            return invalid_request_body_response()
 
 
 @app.route('/bucketlist/api/v1/bucketlist/<int:bucket_id>/items/<int:item_id>',
@@ -479,12 +479,12 @@ def delete_item(bucket_id, item_id):
         return response
 
 
-def verify_token(request):
+def verify_token(my_request):
     '''
     Verifies the passed token's authenticity and return the user_id to which
     the token belongs.
     '''
-    token = request.headers.get("Authorization")
+    token = my_request.headers.get("Authorization")
     if not token:
         abort(401)
     try:
@@ -500,7 +500,9 @@ def verify_token(request):
 
 
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(error):
+    ''' Return custom message when resource is not found '''
+
     response = jsonify({
         'error': 'Oooops! Please check your endpoint url!'
     })
@@ -509,7 +511,9 @@ def page_not_found(e):
 
 
 @app.errorhandler(405)
-def method_not_allowed(e):
+def method_not_allowed(error):
+    ''' Return custom message on invalid method in request '''
+
     response = jsonify({
         'error':
         'Oooops!Invalid request method. Please check your request method!'
